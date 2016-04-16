@@ -60,3 +60,13 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+*.prefs
+.project
+.metadata
+.idea/
+.setting/
+*.db
+src/one_analyse/单期中奖概率.docx
+.pydevproject
+src/one_analyse/cost-line.html
+src/one_analyse/cost_count.html
