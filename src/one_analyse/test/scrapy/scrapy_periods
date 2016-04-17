@@ -11,25 +11,56 @@ from lxml import html
 from threadpool import ThreadPool, makeRequests
 
 good_detail_url = "http://1.163.com/detail/%d-%d.html"
+user_detail_url = "http://1.163.com/user/duobao.do?cid=%d#join"
 
-def request_period_html(gid, pid):
+def request_single_period_html(gid, pid):
     global good_detail_url
-    url = good_detail_url % (gid, pid)
-    response = requests.get(url)
-    doc = html.fromstring(response.text)
+
     try:
+        # request period detail page
+        url = good_detail_url % (gid, pid)
+        response = requests.get(url)
+        doc = html.fromstring(response.text)
+        # parse html to get period
         luck_code = doc.cssselect(".code")[0]
-        nick_name = doc.cssselect(".bd > a")[0]
+        # nick_name = doc.cssselect(".bd > a")[0]
         user_id = int(doc.cssselect("div.user-id > span:last-of-type")[0].text.split("（")[0])
         num = int(doc.cssselect("div.user-buyTimes > span:last-of-type")[0].text.split("人次")[0])
         calc_time = doc.cssselect("div.published-time > span.bd")[0].text
-        buy_time = doc.csselect("div.buy-time > span.bd")[0].text
-        print("period id : %d, luck code : %s, user id : %d, user nick name : %s,\tnum : %d"
-              % (pid, luck_code.text, user_id, nick_name.text, num))
+        buy_time = doc.cssselect("div.buy-time > span.bd")[0].text
+        print("period id : %d, luck code : %s, user id : %d, \tnum : %d"
+              % (pid, luck_code.text, user_id, num))
+        # period = Period(pid, calc_time, num, buy_time, luck_code, gid)
+        # request user's page
+        url = user_detail_url % user_id
+        response = requests.get(url)
+        doc = html.fromstring(response.text)
+        # parse html to get user nick name
+        # nick_name = doc.cssselect("div.m-user-comm-infoBox-cont > ul > li > span.txt")[0].text
+        # print("user id : %d, nick name : %s" % (user_id, nick_name))
 
+        # session = DBScopedSession()
+        # db2.add_period(period, session)
+
+        return True
     except IndexError as e:
         # print("Invalid gid or pid!")
-        pass
+        return False
+    except:
+        raise
+
+
+def request_period_html(gid, begin_pid, section):
+    pid = begin_pid
+    step = -1
+    while pid > (begin_pid + section):
+        res = request_single_period_html(gid, pid)
+        if res:
+            # Interval between adjacent period code is larger than 50.
+            step = -50
+        else:
+            step = -1
+        pid += step
 
 if __name__ == '__main__':
 
@@ -40,16 +71,21 @@ if __name__ == '__main__':
     data = []
     pid = first_pid = 302201602
     last_pid = 302200602
-    group_count = 0
-    while pid > last_pid:
-        data.append(([gid, pid], []))
-        pid -= 1
-        group_count += 1
-        if group_count == 25:
-            thread_requests = makeRequests(request_period_html, data)
-            [tp.putRequest(req) for req in thread_requests]
-            group_count = 0
-            data.clear()
-    # thread_requests = makeRequests(request_period_html, data)
-    # [tp.putRequest(req) for req in thread_requests]
+    step = -500
+    sections = list(range(first_pid, last_pid, step))
+    print(sections)
+    # while pid > last_pid:
+    #     data.append(([gid, pid], []))
+    #     pid -= 1
+    #     group_count += 1
+    #     if group_count == 25:
+    #         thread_requests = makeRequests(request_period_html, data)
+    #         [tp.putRequest(req) for req in thread_requests]
+    #         group_count = 0
+    #         data.clear()
+    for pid in sections:
+        data.append(([gid, pid, step], []))
+        thread_requests = makeRequests(request_period_html, data)
+    thread_requests = makeRequests(request_period_html, data)
+    [tp.putRequest(req) for req in thread_requests]
     tp.wait()
