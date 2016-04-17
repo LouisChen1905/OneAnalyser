@@ -6,7 +6,7 @@ Created on 2016年3月25日
 
 @author: chensi
 '''
-
+import logging
 import threading
 
 import requests
@@ -43,7 +43,7 @@ user_detail_url = "http://1.163.com/user/duobao.do?cid=%d#join"
 
 def request_records(request_url, period, period_i, period_count, page_num, total_page):
     global list_records, list_users
-    print("Getting perioad(%d/%d) records. Page %d, total page:%d" % (period_i, period_count, page_num, total_page))
+    logging.info("Getting perioad(%d/%d) records. Page %d, total page:%d" % (period_i, period_count, page_num, total_page))
     record_parser = RecordsParser(request_url)
     list_records_2, list_users_2, total_count = record_parser.get_response(period.period)
     session = DBScopedSession()
@@ -77,7 +77,7 @@ def request_single_period_html(gid, pid):
         num = int(doc.cssselect("div.user-buyTimes > span:last-of-type")[0].text.split("人次")[0])
         calc_time = doc.cssselect("div.published-time > span.bd")[0].text
         buy_time = doc.cssselect("div.buy-time > span.bd")[0].text
-        print("period id : %d, luck code : %s, user id : %d, \tnum : %d"
+        logging.info("period id : %d, luck code : %s, user id : %d, \tnum : %d"
               % (pid, luck_code, user_id, num))
         # request user's page
         url = user_detail_url % user_id
@@ -85,7 +85,7 @@ def request_single_period_html(gid, pid):
         doc = html.fromstring(response.text)
         # parse html to get user nick name
         nick_name = doc.cssselect("div.m-user-comm-infoBox-cont > ul > li > span.txt")[0].text
-        print("user id : %d, nick name : %s" % (user_id, nick_name))
+        logging.info("user id : %d, nick name : %s" % (user_id, nick_name))
         user = User(cid=user_id, nick_name=nick_name)
         period = Period(pid, calc_time, num, buy_time, luck_code, user, gid)
 
@@ -105,9 +105,11 @@ def request_single_period_html(gid, pid):
 
 
 def request_period_html(gid, begin_pid, section):
+
     pid = begin_pid
     step = -1
     while pid > (begin_pid + section):
+        logging.info("Requesting period id : %d" % pid)
         res = request_single_period_html(gid, pid)
         if res:
             # Interval between adjacent period code is larger than 50.
@@ -135,7 +137,7 @@ if __name__ == '__main__':
     pid = first_pid = 302201602
     last_pid = 300001602
     group_count = 0
-    step = -500
+    step = -2000
     sections = list(range(first_pid, last_pid, step))
     # while pid > last_pid:
     #     data.append(([gid, pid], []))
@@ -146,13 +148,13 @@ if __name__ == '__main__':
     #         [tp.putRequest(req) for req in thread_requests]
     #         group_count = 0
     #         data.clear()
-    print("Generating period id section...")
+    logging.info("Generating period id section...")
     for pid in sections:
         data.append(([gid, pid, step], []))
         thread_requests = makeRequests(request_period_html, data)
     thread_requests = makeRequests(request_period_html, data)
     [tp.putRequest(req) for req in thread_requests]
-    print("Scrapying details of periods...")
+    logging.info("Scrapying details of periods...")
     tp.wait()
 
     #     print(len(list_periods))
