@@ -20,6 +20,9 @@ from one_analyse.lib.db.ormtables import Base
 from one_analyse.lib.db.ormtables import OneORM, Period, User
 from one_analyse.lib.http.get_records import RecordsParser
 
+# Configure logging
+logging.basicConfig(filename="one_analyse.log", level=logging.DEBUG, format='%(asctime)s %(message)s')
+
 DBSession = sessionmaker(bind=one_engine)
 DBScopedSession = scoped_session(
     sessionmaker(
