@@ -35,7 +35,7 @@ cur.execute('''CREATE TABLE records
                 )''')
 
 cur.execute('''CREATE TABLE periods
-                (period INTEGER PRIMARY KEY,
+                (pid INTEGER PRIMARY KEY,
                 status INTEGER,
                 gid integer not null,
                 is_limit boolean,

@@ -29,7 +29,7 @@ class Period(Base):
     '''
     __tablename__ = "periods"
     
-    period = Column(Integer, primary_key=True)
+    pid = Column(Integer, primary_key=True)
     calc_time = Column(DateTime)
     cost = Column(Integer)
     duobao_time = Column(DateTime)
@@ -37,10 +37,10 @@ class Period(Base):
     owner_id = Column(Integer, ForeignKey("users.cid"), nullable=False)
     gid = Column(Integer, ForeignKey("goods.gid"), nullable=False)
 
-    def __init__(self, period, calc_time, cost, duobao_time, lucky_code, owner, gid=424):
+    def __init__(self, pid, calc_time, cost, duobao_time, lucky_code, owner, gid=424):
         '''
 
-        :param period:
+        :param pid:
         :param calc_time:
         :param cost:
         :param duobao_time:
@@ -48,7 +48,7 @@ class Period(Base):
         :param owner:
         :param gid: default value is 424 (Apple MacBook Air 13.3" 128GB)
         '''
-        self.period = period
+        self.pid = pid
         if isinstance(calc_time, str):
             self.calc_time= datetime.strptime(calc_time, "%Y-%m-%d %H:%M:%S.%f")
         elif isinstance(calc_time, datetime):
@@ -64,8 +64,8 @@ class Period(Base):
         self.gid = gid
         
     def __repr__(self):
-        return '''<periods(period='%s',calc_time='%s',cost=%d,duobao_time='%s',lucky_code=%d,owner_id=%d)>'''%(
-                            self.period,
+        return '''<periods(pid='%s',calc_time='%s',cost=%d,duobao_time='%s',lucky_code=%d,owner_id=%d)>'''%(
+                            self.pid,
                             self.calc_time,
                             self.cost,
                             self.duobao_time,
@@ -74,7 +74,7 @@ class Period(Base):
          
 #     def __conform__(self, protocol):
 #         if protocol is sqlite3.PrepareProtocol:
-#             return "%d,%s,%d,%s,%d,%d"%(self.period, self.calc_time, self.cost, self.duobao_time, self.lucky_code, self.owner)
+#             return "%d,%s,%d,%s,%d,%d"%(self.pid, self.calc_time, self.cost, self.duobao_time, self.lucky_code, self.owner)
 
 
 class User(Base):
@@ -120,7 +120,7 @@ class PeriodRecord(Base):
     rid = Column(Integer, index=True)
     time = Column(DateTime)
     user_id = Column(Integer, ForeignKey("users.cid"), nullable=False)
-    period_id = Column(Integer, ForeignKey("periods.period"), nullable=False)
+    period_id = Column(Integer, ForeignKey("periods.pid"), nullable=False)
     codes = Column(String(4096))
     
     __table_args__ = (
@@ -233,7 +233,7 @@ class OneORM(object):
         
     def add_period(self, period, session):
         try:
-            periodq = session.query(Period).filter(Period.period==period.period).first()
+            periodq = session.query(Period).filter(Period.pid == period.period).first()
             if periodq==None:
                 session.add(period)
                 session.commit()
@@ -246,12 +246,12 @@ class OneORM(object):
         return session.query(Period).all()
     
     def get_periods_cost(self, session):
-        return session.query(Period.period, Period.cost).all()
+        return session.query(Period.pid, Period.cost).all()
     
     def get_periods_max_cost(self, session):
         return session.query(Period.cost, func.max(UserTotalNum.total_num).label("max_num")).\
-                filter(Period.period==UserTotalNum.period_id).\
-                group_by(Period.period).all()
+                filter(Period.pid == UserTotalNum.period_id).\
+                group_by(Period.pid).all()
     
     def count_periods_const(self, session, cost_filter):
         low = 1
@@ -259,7 +259,7 @@ class OneORM(object):
         count = []
         for n in cost_filter:
             high = n
-            count.append(session.query(func.count(Period.period)).filter(Period.cost >= low, Period.cost < high).all())
+            count.append(session.query(func.count(Period.pid)).filter(Period.cost >= low, Period.cost < high).all())
             low = high
             
         return count
