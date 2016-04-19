@@ -18,8 +18,6 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import ForeignKey, PrimaryKeyConstraint, MetaData,\
     Table
 
-from one_analyse import one_engine
-
 Base = declarative_base()
 
 
@@ -218,22 +216,24 @@ class OneORM(object):
     '''
     classdocs
     '''
-    
-    meta = MetaData(bind=one_engine)
 
-    user_period_total_num = Table("user_period_total_cost", meta, autoload=True)
+    meta = MetaData()
 
-    def __init__(self):
+
+    def __init__(self, engine):
         '''
         Constructor
         '''
+        self.meta.bind = engine
+        self.user_period_total_num = Table("user_period_total_cost", self.meta, autoload=True)
         
     def InitDB(self):
+
         orm.mapper(UserTotalNum, self.user_period_total_num, primary_key=[self.user_period_total_num.c.period_id])
         
     def add_period(self, period, session):
         try:
-            periodq = session.query(Period).filter(Period.pid == period.period).first()
+            periodq = session.query(Period).filter(Period.pid == period.pid).first()
             if periodq==None:
                 session.add(period)
                 session.commit()

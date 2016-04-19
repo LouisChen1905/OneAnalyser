@@ -12,24 +12,19 @@ import threading
 
 import requests
 from lxml import html
+from sqlalchemy import create_engine
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from threadpool import ThreadPool, makeRequests
 
-from one_analyse import one_engine
 from one_analyse.lib.db.ormtables import Base
 from one_analyse.lib.db.ormtables import OneORM, Period, User
 from one_analyse.lib.http.get_records import RecordsParser
 
-DBSession = sessionmaker(bind=one_engine)
+DBSession = sessionmaker()
 DBScopedSession = scoped_session(
-    sessionmaker(
-        autoflush=False,
-        autocommit=False,
-        bind=one_engine
-    )
+    DBSession
 )
-Base.metadata.create_all(one_engine)
 list_periods = []
 periods_mutex = threading.Lock()
 list_records = []
@@ -101,6 +96,8 @@ def request_single_period_html(gid, pid):
     except IndexError:
         # print("Invalid gid or pid!")
         pass
+    except requests.exceptions.ConnectionError:
+        pass
     finally:
         DBScopedSession.remove()
 
@@ -124,15 +121,28 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configure run mode.', prog='TestArgumentParse')
     parser.add_argument('-p', '--getperiodfrom', metavar='xxx', choices=['webpage', 'database'], required=True, default='webpage',
                         help='webpage: scraping from web page or database: fetching periods from database')
+    parser.add_argument('--tps', dest='tps', default=50, type=int, help='the size of thread pool')
+    parser.add_argument('--dbps', dest='dbps', default=50, type=int, help='the size of database thread pool')
     parser.add_argument('--version', action='version', version='%(prog)s 0.1')
     args = vars(parser.parse_args())
     getperiodfrom = args['getperiodfrom']
+    thread_pool_size = args['tps']
+    db_pool_size = args['dbps']
 
-    db2 = OneORM()
+    one_engine = create_engine('mysql+mysqlconnector://one:83796737@127.0.0.1/one_db', pool_size=db_pool_size, max_overflow=100)
+    DBSession.configure(bind=one_engine)
+    DBScopedSession.configure(bind=one_engine)
+
+    Base.metadata.create_all(one_engine)
+
+    # Configure logging
+    logging.basicConfig(filename="one_analyse.log", level=logging.DEBUG, format='%(asctime)s %(message)s')
+
+    db2 = OneORM(one_engine)
     db2.InitDB()
 
     # Initialize thread pool
-    tp = ThreadPool(50)
+    tp = ThreadPool(thread_pool_size)
 
     if getperiodfrom == 'webpage':
         # Get periods from web pages.
