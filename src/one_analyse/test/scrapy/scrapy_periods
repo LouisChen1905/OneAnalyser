@@ -6,8 +6,11 @@ Created on 2016年3月25日
 
 @author: chensi
 '''
+import argparse
+
 import requests
 from lxml import html
+from requests.packages.chardet.chardetect import description_of
 from threadpool import ThreadPool, makeRequests
 
 good_detail_url = "http://1.163.com/detail/%d-%d.html"
@@ -64,7 +67,7 @@ def request_period_html(gid, begin_pid, section):
 
 if __name__ == '__main__':
 
-    # Initialize thread pool
+        # Initialize thread pool
     tp = ThreadPool(50)
     # good is Apple MacBook Air
     gid = 424

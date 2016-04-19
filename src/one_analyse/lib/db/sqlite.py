@@ -59,7 +59,7 @@ class SQLiteDB(object):
                         )''')
         
         cur.execute('''CREATE TABLE periods
-                        (period INTEGER PRIMARY KEY,
+                        (pid INTEGER PRIMARY KEY,
                         status INTEGER,
                         gid integer,
                         is_limit boolean,
@@ -91,7 +91,7 @@ class SQLiteDB(object):
         
     def insert_period(self, period):
         cur = self.conn.cursor()
-        cur.execute('''insert into periods(period, lucky_code, calc_time, duobao_time, cost, owner_id)
+        cur.execute('''insert into periods(pid, lucky_code, calc_time, duobao_time, cost, owner_id)
                     values (?,?,?,?,?,?)''', (period.period, period.lucky_code, period.calc_time, period.duobao_time, period.cost, period.owner.cid))
         self.conn.commit()
         

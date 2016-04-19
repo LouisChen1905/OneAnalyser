@@ -39,4 +39,3 @@ class PeriodsParser(object):
                 list_periods.append(period)
                 list_owners.append(owner)
         return list_periods, list_owners
-            
