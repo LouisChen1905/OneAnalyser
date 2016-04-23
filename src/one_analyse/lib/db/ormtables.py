@@ -233,8 +233,6 @@ class OneORM(object):
         
     def add_period(self, period, session):
         try:
-            # periodq = session.query(Period).filter(Period.pid == period.pid).first()
-            # if periodq==None:
             session.add(period)
             session.commit()
         except orm.exc.FlushError as e:
@@ -266,32 +264,23 @@ class OneORM(object):
     
     def add_user(self, user, session):
         try:
-            # userq = session.query(User).filter(User.cid==user.cid).first()
-            # if userq is None:
             session.add(user)
             session.commit()
         except orm.exc.FlushError as e:
             print("except:", e)
-            raise
         except sqlalchemy.exc.InvalidRequestError as e:
             print("except:", e)
-            raise
         except sqlite3.IntegrityError as e:
             print("except:", e)
-            raise
         except sqlalchemy.exc.IntegrityError as e:
             print("except:", e)
-            raise
-            
-        
+
     def get_users(self, session):
         return session.query(User).all()
     
     def add_period_record(self, record, session):
         
         try:
-            # recordq = session.query(PeriodRecord).filter(PeriodRecord.period_id==record.period_id, PeriodRecord.user_id==record.user_id, PeriodRecord.rid==record.rid).first()
-            # if recordq is None:
             session.add(record)
             session.commit()
         except orm.exc.FlushError as e:
