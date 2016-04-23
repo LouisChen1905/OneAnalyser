@@ -93,11 +93,11 @@ def request_single_period_html(gid, pid):
         periods_mutex.release()
 
         return True
-    except IndexError:
+    except IndexError as e:
         # print("Invalid gid or pid!")
-        pass
-    except requests.exceptions.ConnectionError:
-        pass
+        print("except:",e)
+    except requests.exceptions.ConnectionError as e:
+        print("except:", e)
     finally:
         DBScopedSession.remove()
 
