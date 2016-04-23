@@ -7,6 +7,7 @@ Created on 2016年3月25日
 @author: chensi
 '''
 
+import logging
 import sqlite3
 from datetime import datetime
 
@@ -229,16 +230,16 @@ class OneORM(object):
         
     def InitDB(self):
 
-        orm.mapper(UserTotalNum, self.user_period_total_num, primary_key=[self.user_period_total_num.c.period_id])
+        orm.mapper(UserTotalNum, self.user_period_total_num, primary_key=[self.user_period_total_num.c.pid])
         
     def add_period(self, period, session):
         try:
             session.add(period)
             session.commit()
         except orm.exc.FlushError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlalchemy.exc.InvalidRequestError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         
     def get_periods(self, session):
         return session.query(Period).all()
@@ -267,13 +268,13 @@ class OneORM(object):
             session.add(user)
             session.commit()
         except orm.exc.FlushError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlalchemy.exc.InvalidRequestError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlite3.IntegrityError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlalchemy.exc.IntegrityError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
 
     def get_users(self, session):
         return session.query(User).all()
@@ -284,11 +285,11 @@ class OneORM(object):
             session.add(record)
             session.commit()
         except orm.exc.FlushError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlalchemy.exc.InvalidRequestError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
         except sqlite3.IntegrityError as e:
-            print("except:", e)
+            logging.warning("except:%s" % e)
             
     def get_period_records(self, session):
         return session.query(PeriodRecord).all()

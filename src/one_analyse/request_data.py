@@ -94,8 +94,7 @@ def request_single_period_html(gid, pid):
 
         return True
     except IndexError as e:
-        # print("Invalid gid or pid!")
-        print("except:",e)
+        print("Invalid gid or pid!")
     except requests.exceptions.ConnectionError as e:
         print("except:", e)
     finally:
@@ -106,28 +105,34 @@ def request_period_html(gid, begin_pid, section):
 
     pid = begin_pid
     step = -1
-    while pid > (begin_pid + section):
+    while pid >= (begin_pid + section):
         logging.info("Requesting period id : %d", pid)
         res = request_single_period_html(gid, pid)
-        if res:
-            # Interval between adjacent period code is larger than 50.
-            step = -50
-        else:
-            step = -1
         pid += step
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configure run mode.', prog='TestArgumentParse')
-    parser.add_argument('-p', '--getperiodfrom', metavar='xxx', choices=['webpage', 'database'], required=True, default='webpage',
+    parser.add_argument('-p', '--getperiodfrom', metavar='xxx', choices=['webpage', 'database'], required=True,
+                        default='webpage',
                         help='webpage: scraping from web page or database: fetching periods from database')
     parser.add_argument('--tps', dest='tps', default=50, type=int, help='the size of thread pool')
     parser.add_argument('--dbps', dest='dbps', default=50, type=int, help='the size of database thread pool')
     parser.add_argument('--version', action='version', version='%(prog)s 0.1')
+    parser.add_argument('-g', '--gid', metavar='good_id', type=int, default=424,
+                        help='good\'s id, default is MacBook Air')
+    parser.add_argument('--pid-max', dest='pid_max', type=int, default=302201602,
+                        help='maximum of period\'s id')
+    parser.add_argument('--pid-min', dest='pid_min', type=int, default=300001602,
+                        help='minimum of period\'s id')
+
     args = vars(parser.parse_args())
     getperiodfrom = args['getperiodfrom']
     thread_pool_size = args['tps']
     db_pool_size = args['dbps']
+    gid = args['gid']
+    first_pid = args['pid_max']
+    last_pid = args['pid_min']
 
     one_engine = create_engine('mysql+mysqlconnector://one:83796737@127.0.0.1/one_db', pool_size=db_pool_size, max_overflow=100)
     DBSession.configure(bind=one_engine)
@@ -155,10 +160,8 @@ if __name__ == '__main__':
 
 
         # good is Apple MacBook Air
-        gid = 424
         data = []
-        pid = first_pid = 302201602
-        last_pid = 300001602
+        pid = first_pid
         group_count = 0
         step = -2000
         sections = list(range(first_pid, last_pid, step))
@@ -174,7 +177,6 @@ if __name__ == '__main__':
         logging.info("Generating period id section...")
         for pid in sections:
             data.append(([gid, pid, step], []))
-            thread_requests = makeRequests(request_period_html, data)
         thread_requests = makeRequests(request_period_html, data)
         [tp.putRequest(req) for req in thread_requests]
         logging.info("Scraping details of periods...")
@@ -183,7 +185,7 @@ if __name__ == '__main__':
         # Get periods from database
         logging.info("Obtaining periods from database...")
         session = DBScopedSession()
-        list_periods = session.query(Period).filter(Period.pid < 302201602).all()
+        list_periods = session.query(Period).filter(Period.pid < first_pid).all()
         session.expunge_all()
 
     #     print(len(list_periods))
