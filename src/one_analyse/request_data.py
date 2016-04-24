@@ -7,6 +7,7 @@ Created on 2016年3月25日
 @author: chensi
 '''
 import argparse
+import getpass
 import logging
 import threading
 
@@ -134,7 +135,11 @@ if __name__ == '__main__':
     first_pid = args['pid_max']
     last_pid = args['pid_min']
 
-    one_engine = create_engine('mysql+mysqlconnector://one:83796737@127.0.0.1/one_db', pool_size=db_pool_size, max_overflow=100)
+    user = input("Enter database user:")
+    password = getpass.getpass("Enter your password:")
+
+    one_engine = create_engine('mysql+mysqlconnector://%s:%s@127.0.0.1/one_db' % (user, password),
+                               pool_size=db_pool_size, max_overflow=100)
     DBSession.configure(bind=one_engine)
     DBScopedSession.configure(bind=one_engine)
 
